@@ -1,0 +1,10 @@
+{
+  "name": "voltra-resolve",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Ryan Graff <ryantgraff@resistdesign.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}
