@@ -5,6 +5,7 @@
   "author": "Ryan Graff <ryantgraff@resistdesign.com>",
   "license": "MIT",
   "devDependencies": {
+    "prettier": "^3.0.3",
     "typescript": "^5.2.2"
   }
 }
