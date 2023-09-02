@@ -84,13 +84,7 @@ export const resolveDependency = async (
     dependencyValue = getValueFromPath(valueStructure, path);
 
   if (isDep && typeof dependencyValue === "undefined") {
-    // TODO: Finish.
-    const {
-      dependencies = {},
-      getters = {},
-      setters = {},
-      factory,
-    } = declaration as Dependency;
+    const { dependencies = {}, factory } = declaration as Dependency;
     const subDepValues: Record<string, any> = {};
 
     for (const k in dependencies) {
@@ -102,6 +96,9 @@ export const resolveDependency = async (
       newValueStructure = newSubValueStructure;
       subDepValues[k] = subDepValue;
     }
+
+    dependencyValue = await factory(subDepValues);
+    // TODO: Set dependencyValue on newValueStructure.
   }
 
   return {
