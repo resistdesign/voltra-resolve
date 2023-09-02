@@ -125,7 +125,11 @@ export const resolveDependency = async (
     }
 
     dependencyValue = await factory(subDepValues);
-    // TODO: Set dependencyValue on newValueStructure.
+    newValueStructure = setValueFromPath(
+      newValueStructure,
+      path,
+      dependencyValue,
+    );
   }
 
   return {
