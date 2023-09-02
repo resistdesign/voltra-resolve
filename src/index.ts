@@ -53,6 +53,33 @@ export const getValueFromPath = (
   return value;
 };
 
+export const setValueFromPath = (
+  valueStructure: ValueStructure = {},
+  path: DependencyPath = [],
+  value: any,
+): ValueStructure => {
+  const pathArray = getDependencyPathArray(path);
+  const newValueStructure: ValueStructure = { ...valueStructure };
+
+  let lastValueStructure: ValueStructure = newValueStructure;
+
+  for (let i = 0; i < pathArray.length; i++) {
+    const p = pathArray[i];
+    const isLast = i === pathArray.length - 1;
+
+    if (isLast) {
+      lastValueStructure[p] = value;
+    } else {
+      lastValueStructure[p] = {
+        ...lastValueStructure[p],
+      };
+      lastValueStructure = lastValueStructure[p];
+    }
+  }
+
+  return newValueStructure;
+};
+
 export const getDependencyDeclarationFromDeclaration = (
   declaration: Declaration = {},
   path: DependencyPath = [],
