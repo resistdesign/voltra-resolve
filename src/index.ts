@@ -85,6 +85,23 @@ export const resolveDependency = async (
 
   if (isDep) {
     // TODO: Finish.
+    const {
+      dependencies = {},
+      getters = {},
+      setters = {},
+      factory,
+    } = declaration as Dependency;
+    const subDepValues: Record<string, any> = {};
+
+    for (const k in dependencies) {
+      const {
+        valueStructure: newSubValueStructure,
+        dependencyValue: subDepValue,
+      } = await resolveDependency(newValueStructure, module, dependencies[k]);
+
+      newValueStructure = newSubValueStructure;
+      subDepValues[k] = subDepValue;
+    }
   } else {
     dependencyValue = getValueFromPath(valueStructure, path);
   }
