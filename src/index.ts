@@ -34,28 +34,30 @@ export const getDependencyPathArray = (
 ): DependencyPathArray =>
   Array.isArray(path) ? path : stringPathToArrayPath(path);
 
-export const getDependencyDeclarationFromDeclaration = (
-  declaration: Declaration = {},
+export const getValueFromPath = (
+  valueStructure: ValueStructure = {},
   path: DependencyPath = [],
-): Declaration | undefined => {
+): any => {
   const pathArray = getDependencyPathArray(path);
 
-  let dependency = declaration;
+  let value = valueStructure;
 
   for (const p of pathArray) {
-    if (
-      dependency !== null &&
-      typeof dependency !== "undefined" &&
-      p in dependency
-    ) {
-      dependency = dependency[p as keyof typeof dependency] as Declaration;
-    } else {
+    value = value?.[p as keyof typeof value];
+
+    if (typeof value === "undefined") {
       break;
     }
   }
 
-  return dependency;
+  return value;
 };
+
+export const getDependencyDeclarationFromDeclaration = (
+  declaration: Declaration = {},
+  path: DependencyPath = [],
+): Declaration | undefined =>
+  getValueFromPath(declaration, path) as Declaration | undefined;
 
 export const declarationIsDependency = (
   declaration: Declaration = {},
