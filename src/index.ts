@@ -81,9 +81,9 @@ export const resolveDependency = async (
   const isDep = declarationIsDependency(declaration);
 
   let newValueStructure = valueStructure,
-    dependencyValue;
+    dependencyValue = getValueFromPath(valueStructure, path);
 
-  if (isDep) {
+  if (isDep && typeof dependencyValue === "undefined") {
     // TODO: Finish.
     const {
       dependencies = {},
@@ -102,8 +102,6 @@ export const resolveDependency = async (
       newValueStructure = newSubValueStructure;
       subDepValues[k] = subDepValue;
     }
-  } else {
-    dependencyValue = getValueFromPath(valueStructure, path);
   }
 
   return {
