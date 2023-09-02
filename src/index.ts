@@ -80,10 +80,14 @@ export const resolveDependency = async (
   const declaration = getDependencyDeclarationFromDeclaration(module, path);
   const isDep = declarationIsDependency(declaration);
 
-  // TODO: Finish.
-
   let newValueStructure = valueStructure,
     dependencyValue;
+
+  if (isDep) {
+    // TODO: Finish.
+  } else {
+    dependencyValue = getValueFromPath(valueStructure, path);
+  }
 
   return {
     valueStructure: newValueStructure,
