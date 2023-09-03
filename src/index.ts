@@ -137,3 +137,4 @@ export const resolveDependency = async (
     dependencyValue,
   };
 };
+// TODO: Add relative path support, Ex: ./path/to/dependency and ../path/to/dependency.
