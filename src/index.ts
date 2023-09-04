@@ -13,6 +13,7 @@ export type Dependency = {
   factory: (dependencies: Record<string, any>) => Promise<any>;
 };
 
+// TODO: Add DependencyPath that points to another value or possible dependency.
 export type Declaration = Dependency | Module;
 
 export type Module = {
