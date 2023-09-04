@@ -32,7 +32,7 @@ export const arrayPathToStringPath = (path: DependencyPathArray): string =>
 export const getDependencyPathArray = (
   path: DependencyPath,
 ): DependencyPathArray =>
-  Array.isArray(path) ? path : stringPathToArrayPath(path);
+  Array.isArray(path) ? [...path] : stringPathToArrayPath(path);
 
 export const getValueFromPath = (
   valueStructure: ValueStructure = {},
@@ -94,6 +94,32 @@ export const declarationIsDependency = (
   return typeof factory === "function";
 };
 
+export const resolvePath = (
+  path: DependencyPath,
+  basePath: DependencyPath,
+): DependencyPathArray => {
+  const pathArray = getDependencyPathArray(path);
+
+  if (pathArray[0] === "") {
+    // Absolute path.
+    return pathArray;
+  } else {
+    // Relative path.
+    const pathArrayWithoutCurrentDirRef = pathArray.filter((p) => p !== ".");
+    const pathNavUpRelCount = pathArrayWithoutCurrentDirRef.filter(
+      (p) => p === "..",
+    ).length;
+    const basePathArray = getDependencyPathArray(basePath).filter(
+      (p, i) => i >= pathNavUpRelCount,
+    );
+    const pathArrayWithoutNavUpRel = pathArrayWithoutCurrentDirRef.filter(
+      (p) => p !== "..",
+    );
+
+    return [...basePathArray, ...pathArrayWithoutNavUpRel];
+  }
+};
+
 export type ResolvedDependencyData = {
   valueStructure: ValueStructure;
   dependencyValue: any;
@@ -137,5 +163,3 @@ export const resolveDependency = async (
     dependencyValue,
   };
 };
-// TODO: Add relative path support, Ex: ./path/to/dependency and ../path/to/dependency.
-// TODO: Add array support to ValueStructure.
