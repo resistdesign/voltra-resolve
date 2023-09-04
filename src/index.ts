@@ -97,7 +97,7 @@ export const declarationIsDependency = (
 
 export const resolvePath = (
   path: DependencyPath,
-  basePath: DependencyPath,
+  basePath?: DependencyPath,
 ): DependencyPathArray => {
   const pathArray = getDependencyPathArray(path);
 
@@ -110,7 +110,7 @@ export const resolvePath = (
     const pathNavUpRelCount = pathArrayWithoutCurrentDirRef.filter(
       (p) => p === "..",
     ).length;
-    const basePathArray = getDependencyPathArray(basePath).filter(
+    const basePathArray = getDependencyPathArray(basePath || []).filter(
       (p, i) => i >= pathNavUpRelCount,
     );
     const pathArrayWithoutNavUpRel = pathArrayWithoutCurrentDirRef.filter(
@@ -130,12 +130,14 @@ export const resolveDependency = async (
   valueStructure: ValueStructure = {},
   module: Module,
   path: DependencyPath,
+  basePath?: DependencyPath,
 ): Promise<ResolvedDependencyData> => {
-  const declaration = getDependencyDeclarationFromDeclaration(module, path);
+  const fullPath = resolvePath(path, basePath);
+  const declaration = getDependencyDeclarationFromDeclaration(module, fullPath);
   const isDep = declarationIsDependency(declaration);
 
   let newValueStructure = valueStructure,
-    dependencyValue = getValueFromPath(valueStructure, path);
+    dependencyValue = getValueFromPath(valueStructure, fullPath);
 
   if (isDep && typeof dependencyValue === "undefined") {
     const { dependencies = {}, factory } = declaration as Dependency;
@@ -145,7 +147,13 @@ export const resolveDependency = async (
       const {
         valueStructure: newSubValueStructure,
         dependencyValue: subDepValue,
-      } = await resolveDependency(newValueStructure, module, dependencies[k]);
+        // TODO: How do sub-relative paths work?
+      } = await resolveDependency(
+        newValueStructure,
+        module,
+        dependencies[k],
+        basePath,
+      );
 
       newValueStructure = newSubValueStructure;
       subDepValues[k] = subDepValue;
@@ -154,7 +162,7 @@ export const resolveDependency = async (
     dependencyValue = await factory(subDepValues);
     newValueStructure = setValueFromPath(
       newValueStructure,
-      path,
+      fullPath,
       dependencyValue,
     );
   }
