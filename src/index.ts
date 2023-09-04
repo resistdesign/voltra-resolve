@@ -13,8 +13,7 @@ export type Dependency = {
   factory: (dependencies: Record<string, any>) => Promise<any>;
 };
 
-// TODO: Add DependencyPath that points to another value or possible dependency.
-export type Declaration = Dependency | Module;
+export type Declaration = Dependency | Module | DependencyPath;
 
 export type Module = {
   [key: string]: Declaration;
@@ -84,9 +83,22 @@ export const setValueFromPath = (
 export const getDependencyDeclarationFromDeclaration = (
   declaration: Declaration = {},
   path: DependencyPath = [],
-): Declaration | undefined =>
-  getValueFromPath(declaration, path) as Declaration | undefined;
-
+): Declaration | undefined => {
+  if (
+    Array.isArray(declaration) ||
+    typeof declaration === "string" ||
+    typeof declaration === "number"
+  ) {
+    return {
+      dependencies: {
+        value: declaration,
+      },
+      factory: async ({ value }) => value,
+    };
+  } else {
+    return getValueFromPath(declaration, path) as Declaration | undefined;
+  }
+};
 export const declarationIsDependency = (
   declaration: Declaration = {},
 ): boolean => {
@@ -97,7 +109,7 @@ export const declarationIsDependency = (
 
 export const resolvePath = (
   path: DependencyPath,
-  basePath?: DependencyPath,
+  basePath: DependencyPath = [""],
 ): DependencyPathArray => {
   const pathArray = getDependencyPathArray(path);
 
@@ -110,7 +122,7 @@ export const resolvePath = (
     const pathNavUpRelCount = pathArrayWithoutCurrentDirRef.filter(
       (p) => p === "..",
     ).length;
-    const basePathArray = getDependencyPathArray(basePath || []).filter(
+    const basePathArray = getDependencyPathArray(basePath).filter(
       (p, i) => i >= pathNavUpRelCount,
     );
     const pathArrayWithoutNavUpRel = pathArrayWithoutCurrentDirRef.filter(
@@ -130,7 +142,7 @@ export const resolveDependency = async (
   valueStructure: ValueStructure = {},
   module: Module,
   path: DependencyPath,
-  basePath?: DependencyPath,
+  basePath: DependencyPath = [""],
 ): Promise<ResolvedDependencyData> => {
   const fullPath = resolvePath(path, basePath);
   const correctedBasePath = fullPath.slice(0, fullPath.length - 1);
