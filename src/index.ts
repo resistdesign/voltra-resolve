@@ -133,6 +133,7 @@ export const resolveDependency = async (
   basePath?: DependencyPath,
 ): Promise<ResolvedDependencyData> => {
   const fullPath = resolvePath(path, basePath);
+  const correctedBasePath = fullPath.slice(0, fullPath.length - 1);
   const declaration = getDependencyDeclarationFromDeclaration(module, fullPath);
   const isDep = declarationIsDependency(declaration);
 
@@ -147,12 +148,11 @@ export const resolveDependency = async (
       const {
         valueStructure: newSubValueStructure,
         dependencyValue: subDepValue,
-        // TODO: How do sub-relative paths work?
       } = await resolveDependency(
         newValueStructure,
         module,
         dependencies[k],
-        basePath,
+        correctedBasePath,
       );
 
       newValueStructure = newSubValueStructure;
