@@ -222,8 +222,7 @@ export const getDependantTree = (
 export type ResolvedDependencyData = {
   valueStructure: ValueStructure;
   dependencyValue: any;
-  // TODO: Implement this.
-  changedPaths?: DependencyPath[];
+  changedPaths: DependencyPath[];
 };
 
 export const resolveDependency = async (
@@ -238,7 +237,9 @@ export const resolveDependency = async (
   const isDep = declarationIsDependency(declaration);
 
   let newValueStructure = valueStructure,
-    dependencyValue = getValueFromPath(valueStructure, fullPath);
+    dependencyValue = getValueFromPath(valueStructure, fullPath),
+    // TODO: Implement this.
+    changedPaths: DependencyPath[] = [];
 
   if (isDep && typeof dependencyValue === "undefined") {
     const { dependencies = {}, factory } = declaration as Dependency;
@@ -255,11 +256,13 @@ export const resolveDependency = async (
         correctedBasePath,
       );
 
+      // TODO: Check is value has changed.
       newValueStructure = newSubValueStructure;
       subDepValues[k] = subDepValue;
     }
 
     dependencyValue = await factory(subDepValues);
+    // TODO: Check is value has changed.
     newValueStructure = setValueFromPath(
       newValueStructure,
       fullPath,
@@ -270,5 +273,6 @@ export const resolveDependency = async (
   return {
     valueStructure: newValueStructure,
     dependencyValue,
+    changedPaths,
   };
 };
