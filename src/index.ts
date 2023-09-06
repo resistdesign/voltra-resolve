@@ -34,6 +34,12 @@ export const getDependencyPathArray = (
 ): DependencyPathArray =>
   Array.isArray(path) ? [...path] : stringPathToArrayPath(path);
 
+export const joinPaths = (...paths: DependencyPath[]): DependencyPathArray => {
+  const pathsArray = paths.map((p) => getDependencyPathArray(p));
+
+  return pathsArray.reduce((acc, p) => [...acc, ...p], []);
+};
+
 export const getValueFromPath = (
   valueStructure: ValueStructure = {},
   path: DependencyPath = [],
@@ -84,19 +90,17 @@ export const getDependencyDeclarationFromDeclaration = (
   declaration: Declaration = {},
   path: DependencyPath = [],
 ): Declaration | undefined => {
-  if (
-    Array.isArray(declaration) ||
-    typeof declaration === "string" ||
-    typeof declaration === "number"
-  ) {
+  if (getDeclarationIsPath(declaration)) {
     return {
       dependencies: {
-        value: declaration,
+        value: declaration as DependencyPath,
       },
       factory: async ({ value }) => value,
     };
   } else {
-    return getValueFromPath(declaration, path) as Declaration | undefined;
+    return getValueFromPath(declaration as Module, path) as
+      | Declaration
+      | undefined;
   }
 };
 export const declarationIsDependency = (
@@ -106,6 +110,11 @@ export const declarationIsDependency = (
 
   return typeof factory === "function";
 };
+
+export const getDeclarationIsPath = (declaration: Declaration = {}): boolean =>
+  Array.isArray(declaration) ||
+  typeof declaration === "string" ||
+  typeof declaration === "number";
 
 export const resolvePath = (
   path: DependencyPath,
@@ -133,9 +142,88 @@ export const resolvePath = (
   }
 };
 
+export type DependantTree = Record<string, DependencyPath[]>;
+
+export const mergeAndUniqueDependencyPathLists = (
+  arr1: DependencyPath[] = [],
+  arr2: DependencyPath[] = [],
+): string[] => {
+  const pathList1 = [...arr1].map((p) =>
+    arrayPathToStringPath(getDependencyPathArray(p)),
+  );
+  const pathList2 = [...arr2].map((p) =>
+    arrayPathToStringPath(getDependencyPathArray(p)),
+  );
+  const uniqueStringPathList = [...pathList1];
+
+  for (const p of pathList2) {
+    if (!uniqueStringPathList.includes(p)) {
+      uniqueStringPathList.push(p);
+    }
+  }
+
+  return uniqueStringPathList;
+};
+
+export const mergeDependantTrees = (
+  tree1: DependantTree = {},
+  tree2: DependantTree = {},
+): DependantTree => {
+  let newTree = {
+    ...tree1,
+  };
+
+  for (const k in tree2) {
+    const tree2Paths = tree2[k] || ([] as DependencyPath[]);
+    const tree1Paths = tree1[k] || ([] as DependencyPath[]);
+
+    newTree[k] = mergeAndUniqueDependencyPathLists(tree1Paths, tree2Paths);
+  }
+
+  return newTree;
+};
+
+export const getDependantTree = (
+  module: Module,
+  basePath: DependencyPath = [""],
+): DependantTree => {
+  let newDepTree = {};
+
+  for (const k in module) {
+    const depPath = joinPaths(basePath, k);
+    const declaration = getDependencyDeclarationFromDeclaration(
+      module,
+      depPath,
+    );
+    const isDep = declarationIsDependency(declaration);
+
+    if (isDep) {
+      const { dependencies = {} } = declaration as Dependency;
+
+      for (const k in dependencies) {
+        const depPath = dependencies[k];
+        const depPathArray = getDependencyPathArray(depPath);
+        const depPathString = arrayPathToStringPath(depPathArray);
+
+        newDepTree = mergeDependantTrees(newDepTree, {
+          [depPathString]: [joinPaths(basePath, k)],
+        });
+      }
+    } else {
+      const subDepTree = getDependantTree(declaration as Module, depPath);
+
+      newDepTree = mergeDependantTrees(newDepTree, subDepTree);
+    }
+  }
+
+  return newDepTree;
+};
+
 export type ResolvedDependencyData = {
   valueStructure: ValueStructure;
   dependencyValue: any;
+  // TODO: Implement this.
+  changedPaths?: DependencyPath[];
 };
 
 export const resolveDependency = async (
