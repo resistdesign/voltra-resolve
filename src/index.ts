@@ -238,17 +238,20 @@ export const resolveDependency = async (
 
   let newValueStructure = valueStructure,
     dependencyValue = getValueFromPath(valueStructure, fullPath),
-    // TODO: Implement this.
     changedPaths: DependencyPath[] = [];
 
   if (isDep && typeof dependencyValue === "undefined") {
     const { dependencies = {}, factory } = declaration as Dependency;
+    const oldValue = getValueFromPath(valueStructure, fullPath);
     const subDepValues: Record<string, any> = {};
 
     for (const k in dependencies) {
+      const subPath = resolvePath(dependencies[k], fullPath);
+      const oldSubValue = getValueFromPath(valueStructure, subPath);
       const {
         valueStructure: newSubValueStructure,
         dependencyValue: subDepValue,
+        changedPaths: changedSubPaths,
       } = await resolveDependency(
         newValueStructure,
         module,
@@ -256,18 +259,32 @@ export const resolveDependency = async (
         correctedBasePath,
       );
 
-      // TODO: Check is value has changed.
-      newValueStructure = newSubValueStructure;
-      subDepValues[k] = subDepValue;
+      changedPaths = mergeAndUniqueDependencyPathLists(
+        changedPaths,
+        changedSubPaths,
+      );
+
+      if (dependencyValue !== oldSubValue) {
+        newValueStructure = newSubValueStructure;
+        subDepValues[k] = subDepValue;
+        changedPaths = mergeAndUniqueDependencyPathLists(changedPaths, [
+          subPath,
+        ]);
+      }
     }
 
     dependencyValue = await factory(subDepValues);
-    // TODO: Check is value has changed.
-    newValueStructure = setValueFromPath(
-      newValueStructure,
-      fullPath,
-      dependencyValue,
-    );
+
+    if (dependencyValue !== oldValue) {
+      newValueStructure = setValueFromPath(
+        newValueStructure,
+        fullPath,
+        dependencyValue,
+      );
+      changedPaths = mergeAndUniqueDependencyPathLists(changedPaths, [
+        fullPath,
+      ]);
+    }
   }
 
   return {
