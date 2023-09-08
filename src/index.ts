@@ -230,6 +230,9 @@ export const resolveDependency = async (
   module: Module,
   path: DependencyPath,
   basePath: DependencyPath = [""],
+  // TODO: onSetValueByPath.
+  // TODO: onGetValueByPath.
+  // TODO: onListenToPath.
 ): Promise<ResolvedDependencyData> => {
   const fullPath = resolvePath(path, basePath);
   const correctedBasePath = fullPath.slice(0, fullPath.length - 1);
